@@ -35,9 +35,12 @@ def shengbte_run(tmp_path_factory, shengbte_example_dir):
 
     workdir = tmp_path_factory.mktemp("sbte") / "shengbte_example"
     shutil.copytree(shengbte_example_dir, workdir)
-    (workdir / "T300K" / "unifiedkappa.dat").unlink()
-    (workdir / "minikappa-300-2.0.dat").unlink()
-    manager = UnifiedkappaManager.from_control(workdir, poscar_filename="POSCAR-prim")
+    for prefix in ["T300K/unifiedkappa", "minikappa-300-2.0"]:
+        for path in workdir.glob(f"{prefix}*"):
+            path.unlink()
+    manager = UnifiedkappaManager.from_control(
+        workdir, poscar_filename="POSCAR-prim", save_histogram=True
+    )
     unified = manager.run_unified_kappa(verbose=False)
     mini = manager.run_minikappa(
         temperatures=[300.0], tau_factors=[2.0], output_dir=workdir, verbose=False
@@ -59,6 +62,23 @@ def test_minikappa_shengbte_example(shengbte_run, shengbte_example_dir):
     ref = np.loadtxt(shengbte_example_dir / "minikappa-300-2.0.dat")
     out = np.loadtxt(workdir / "minikappa-300-2.0.dat")
     np.testing.assert_allclose(out, ref, atol=ATOL)
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize("prefix", ["T300K/unifiedkappa", "minikappa-300-2.0"])
+def test_histograms_shengbte_example(shengbte_run, shengbte_example_dir, prefix):
+    workdir, _, _ = shengbte_run
+    kappa = np.loadtxt(shengbte_example_dir / f"{prefix}.dat").reshape(3, 3, 3)
+    for row, part in enumerate(["d", "od"]):
+        sums = []
+        for direction in ["xx", "yy", "zz"]:
+            name = f"{prefix}-{part}_{direction}.txt"
+            ref = np.loadtxt(shengbte_example_dir / name)
+            out = np.loadtxt(workdir / name)
+            np.testing.assert_allclose(out, ref, rtol=1e-6, atol=1e-12)
+            sums.append(out.sum())
+        # histograms are unsymmetrized; for cubic NaCl their mean is the .dat value
+        assert np.mean(sums) == pytest.approx(kappa[row, 0, 0], abs=ATOL)
 
 
 @pytest.mark.slow

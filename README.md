@@ -26,7 +26,12 @@ cd Unifiedkappa
 pip install -e .            # or: uv pip install -e .
 ```
 
-For development (pytest, ruff, pre-commit, coverage):
+For plotting, install the optional matplotlib dependency:
+```bash
+pip install -e ".[plot]"
+```
+
+For development (pytest, ruff, pre-commit, coverage, matplotlib):
 ```bash
 pip install -e ".[dev]"
 pre-commit install
@@ -53,12 +58,29 @@ minikappa_results = manager.run_minikappa(temperatures=[300.0, 600.0], tau_facto
 from unifiedkappa import UnifiedkappaManager
 
 # supercell and q-point mesh are read from CONTROL
-manager = UnifiedkappaManager.from_control("path/to/shengbte_dir", poscar_filename="POSCAR")
+manager = UnifiedkappaManager.from_control(
+    "path/to/shengbte_dir", poscar_filename="POSCAR"
+)
 unified_results = manager.run_unified_kappa()
 minikappa_results = manager.run_minikappa(temperatures=[300.0])  # also available here
 ```
 
-See [`examples/`](examples/README.md) for runnable NaCl examples of both.
+### Frequency-resolved kappa
+With `save_histogram=True`, the diagonal and off-diagonal contributions are also written
+binned by the frequencies of the two modes, which `unifiedkappa.plotting` can plot:
+```python
+from unifiedkappa import UnifiedkappaManager
+from unifiedkappa.plotting import make_kappa_histogram_plots
+
+manager = UnifiedkappaManager.from_control(
+    "path/to/shengbte_dir", poscar_filename="POSCAR", save_histogram=True
+)
+manager.run_unified_kappa()
+# saves path/to/shengbte_dir/T300K/unifiedkappa-{d,od}_xx.pdf
+make_kappa_histogram_plots("path/to/shengbte_dir/T300K/unifiedkappa")
+```
+
+See [`examples/`](examples/README.md) for runnable NaCl examples of all of the above.
 * Minikappa outputs (`minikappa-{T}-{tau_factor}.dat`) are saved in the base ShengBTE (or
   phonopy) directory as they're based on only harmonic properties
 * Unifiedkappa outputs (`T{T}K/unifiedkappa.dat`) are saved in each ShengBTE temperature

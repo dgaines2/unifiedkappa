@@ -16,3 +16,6 @@ htmlcov/
 
 # Editors
 .vscode/
+
+# Figures made by the examples
+examples/**/*.pdf

@@ -6,6 +6,7 @@ so the phonopy mesh matches ShengBTE's ngrid.
 Writes:
   - T300K/unifiedkappa.dat (from ShengBTE's RTA scattering rates)
   - minikappa-300-2.0.dat (from maximum scattering rates, harmonic properties only)
+  - frequency-resolved histograms of both, {prefix}-{d,od}_{xx,yy,zz}.txt, for plot.py
 """
 
 from pathlib import Path
@@ -18,6 +19,7 @@ manager = UnifiedkappaManager.from_control(
     shengbte_dir=shengbte_dir,
     poscar_filename="POSCAR-prim",
     force_constants_filename="FORCE_CONSTANTS_2ND",
+    save_histogram=True,
 )
 unified_results = manager.run_unified_kappa()
 minikappa_results = manager.run_minikappa(
