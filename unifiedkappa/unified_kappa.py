@@ -7,8 +7,8 @@ import phonopy
 from phonopy import Phonopy
 from phonopy.structure.symmetry import Symmetry, _symmetrize_2nd_rank_tensor
 
-from full_group_velocity import FullGroupVelocity
-from shengbte_analysis import ShengBTEAnalyzer
+from unifiedkappa.full_group_velocity import FullGroupVelocity
+from unifiedkappa.shengbte_analysis import ShengBTEAnalyzer
 
 """
 author: @yixia

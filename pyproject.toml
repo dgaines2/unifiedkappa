@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["unifiedkappa"]
+
+[tool.setuptools.dynamic]
+version = {attr = "unifiedkappa.__version__"}
+
+[project]
+name = "unifiedkappa"
+description = "Diagonal and off-diagonal (coherence) lattice thermal conductivity from phonopy and ShengBTE"
+dynamic = ["version"]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Dale Gaines II", email = "dalegainesii@gmail.com"},
+    {name = "Yi Xia"},
+]
+maintainers = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
+keywords = ["phonons", "thermal conductivity", "wigner transport", "phonopy", "shengbte"]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.22",
+    "phonopy>=4.8,<5",
+    "f90nml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "coverage",
+    "pre-commit",
+    "pytest",
+    "ruff",
+]
+
+[project.urls]
+repository = "https://github.com/dgaines2/Unifiedkappa"
