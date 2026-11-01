@@ -16,6 +16,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.backend_bases import FigureCanvasBase
 
 PARTS = {"d": "Diagonal", "od": "Off-diagonal"}
 DIRECTIONS = ("xx", "yy", "zz")
@@ -69,6 +70,7 @@ def make_kappa_histogram_plot(
     part="od",
     direction="xx",
     fig_path="kappa_histogram.pdf",
+    fig_formats=None,
     color=None,
     elev=30,
     azim=60,
@@ -86,12 +88,15 @@ def make_kappa_histogram_plot(
         part (str): "d" or "od", used for the title and default color
         direction (str): "xx", "yy", or "zz", used for the axis label
         fig_path (str | Path | None): path to save the figure. If None, don't save.
+        fig_formats (str | iterable[str] | None): if given, save one file per format
+            (e.g. ("pdf", "png")) by replacing the extension of fig_path, or appending
+            one if fig_path has no figure extension
         color (str | None): bar color. If None, use COLORS[part].
         elev (float): elevation of the 3D view in degrees
         azim (float): azimuth of the 3D view in degrees
         show (bool): if True, call plt.show()
         return_fig (bool): if True, return the Figure instead of closing it
-        verbose (bool): if True, print the save path
+        verbose (bool): if True, print the save paths
 
     Returns:
         Figure if return_fig is True, otherwise None
@@ -127,10 +132,10 @@ def make_kappa_histogram_plot(
     ax.set_zlabel(rf"$\kappa_{{{direction}}}$ (W/m/K)")
     ax.set_title(f"{PARTS[part]}: {histogram.sum():.3f} W/m/K")
 
-    if fig_path is not None:
-        fig.savefig(fig_path, bbox_inches="tight")
+    for path in get_fig_paths(fig_path, fig_formats):
+        _save_figure(fig, path)
         if verbose:
-            print(f"Saved figure to {fig_path}")
+            print(f"Saved figure to {path}")
     if show:
         plt.show()
     if return_fig:
@@ -143,19 +148,19 @@ def make_kappa_histogram_plots(
     filename_prefix,
     parts=("d", "od"),
     directions=("xx",),
-    fig_format="pdf",
+    fig_formats=("pdf",),
     verbose=True,
     **kwargs,
 ):
     """
     Read histograms written by UnifiedkappaManager and save a 3D bar plot of each to
-    {filename_prefix}-{part}_{direction}.{fig_format}.
+    {filename_prefix}-{part}_{direction}.{fig_format} for each format in fig_formats.
 
     Args:
         filename_prefix (str | Path): prefix used when the histograms were written
         parts (iterable[str]): any of "d", "od"
         directions (iterable[str]): any of "xx", "yy", "zz"
-        fig_format (str): figure file extension
+        fig_formats (str | iterable[str]): figure file extensions, e.g. ("pdf", "png")
         verbose (bool): if True, print the save paths
         **kwargs: passed to make_kappa_histogram_plot
 
@@ -166,20 +171,68 @@ def make_kappa_histogram_plots(
     for part in parts:
         for direction in directions:
             histogram, delta_freq = read_kappa_histogram(filename_prefix, part, direction)
-            fig_path = get_histogram_path(filename_prefix, part, direction).with_suffix(
-                f".{fig_format}"
-            )
+            # strip only ".txt": prefixes like "minikappa-300-2.0" contain dots
+            histogram_path = get_histogram_path(filename_prefix, part, direction)
+            fig_path = histogram_path.with_suffix("")
             make_kappa_histogram_plot(
                 histogram,
                 delta_freq,
                 part=part,
                 direction=direction,
                 fig_path=fig_path,
+                fig_formats=fig_formats,
                 verbose=verbose,
                 **kwargs,
             )
-            fig_paths.append(fig_path)
+            fig_paths.extend(get_fig_paths(fig_path, fig_formats))
     return fig_paths
+
+
+def get_fig_paths(fig_path, fig_formats=None):
+    """
+    Paths a figure is saved to.
+
+    Args:
+        fig_path (str | Path | None): figure path, with or without an extension
+        fig_formats (str | iterable[str] | None): if None, [fig_path] as given.
+            Otherwise one path per format: fig_path's extension is replaced if it is a
+            figure format matplotlib knows (e.g. ".pdf"), and the format is appended
+            otherwise (so "minikappa-300-2.0-d_xx" keeps its ".0-d_xx").
+
+    Returns:
+        fig_paths (list[Path])
+    """
+    if fig_path is None:
+        return []
+    fig_path = Path(fig_path)
+    if fig_formats is None:
+        return [fig_path]
+    if isinstance(fig_formats, str):
+        fig_formats = [fig_formats]
+    supported = FigureCanvasBase.get_supported_filetypes()
+    if fig_path.suffix[1:].lower() in supported:
+        fig_path = fig_path.with_suffix("")
+    fig_paths = []
+    for fig_format in fig_formats:
+        fig_format = fig_format.lstrip(".").lower()
+        if fig_format not in supported:
+            raise ValueError(
+                f"Unsupported figure format {fig_format!r}; "
+                f"use one of {sorted(supported)}"
+            )
+        fig_paths.append(fig_path.parent / f"{fig_path.name}.{fig_format}")
+    return fig_paths
+
+
+def _save_figure(fig, fig_path):
+    """
+    Save without a creation date (and, for SVG, with fixed element ids), so identical
+    plots give identical files.
+    """
+    no_date = {"pdf": {"CreationDate": None}, "svg": {"Date": None}}
+    metadata = no_date.get(Path(fig_path).suffix[1:].lower())
+    with plt.rc_context({"svg.hashsalt": "unifiedkappa"}):
+        fig.savefig(fig_path, bbox_inches="tight", metadata=metadata)
 
 
 def _check_part_direction(part, direction):

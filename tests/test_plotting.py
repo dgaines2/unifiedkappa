@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -6,6 +8,7 @@ from matplotlib.colors import to_rgba
 from unifiedkappa import UnifiedkappaManager
 from unifiedkappa.plotting import (
     COLORS,
+    get_fig_paths,
     get_histogram_path,
     make_kappa_histogram_plot,
     make_kappa_histogram_plots,
@@ -133,13 +136,78 @@ def test_make_kappa_histogram_plot_rejects_non_square():
 def test_make_kappa_histogram_plots(histogram_files):
     prefix, _, _ = histogram_files
     fig_paths = make_kappa_histogram_plots(
-        prefix, directions=("xx", "zz"), fig_format="png", verbose=False
+        prefix, directions=("xx", "zz"), fig_formats=("pdf", "png"), verbose=False
     )
     expected = [
-        prefix.parent / f"unifiedkappa-{part}_{direction}.png"
+        prefix.parent / f"unifiedkappa-{part}_{direction}.{fig_format}"
         for part in ("d", "od")
         for direction in ("xx", "zz")
+        for fig_format in ("pdf", "png")
     ]
     assert fig_paths == expected
     assert all(path.stat().st_size > 0 for path in fig_paths)
     assert plt.get_fignums() == []
+
+
+def test_make_kappa_histogram_plots_dotted_prefix(tmp_path):
+    """Prefixes like minikappa-300-2.0 contain dots that must not be treated as
+    extensions."""
+    prefix = tmp_path / "minikappa-300-2.0"
+    np.savetxt(f"{prefix}-od_xx.txt", np.ones((3, 3)), header="delta_freq = 1.0 rad/ps")
+    fig_paths = make_kappa_histogram_plots(
+        prefix, parts=("od",), fig_formats="png", verbose=False
+    )
+    assert fig_paths == [tmp_path / "minikappa-300-2.0-od_xx.png"]
+    assert fig_paths[0].exists()
+
+
+@pytest.mark.parametrize(
+    "fig_path, fig_formats, expected",
+    [
+        (None, ("pdf", "png"), []),
+        ("a/hist.pdf", None, ["a/hist.pdf"]),
+        ("a/hist.pdf", ("pdf", "png"), ["a/hist.pdf", "a/hist.png"]),
+        ("a/hist.PDF", "png", ["a/hist.png"]),
+        ("a/hist", [".svg"], ["a/hist.svg"]),
+        ("a/minikappa-300-2.0-d_xx", ("pdf",), ["a/minikappa-300-2.0-d_xx.pdf"]),
+    ],
+)
+def test_get_fig_paths(fig_path, fig_formats, expected):
+    assert get_fig_paths(fig_path, fig_formats) == [Path(path) for path in expected]
+
+
+def test_get_fig_paths_unsupported_format():
+    with pytest.raises(ValueError, match="Unsupported figure format 'docx'"):
+        get_fig_paths("hist", ("pdf", "docx"))
+
+
+def test_make_kappa_histogram_plot_multiple_formats(tmp_path):
+    make_kappa_histogram_plot(
+        np.ones((3, 3)),
+        1.0,
+        fig_path=tmp_path / "hist.pdf",
+        fig_formats=("pdf", "png", "svg"),
+        verbose=False,
+    )
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "hist.pdf",
+        "hist.png",
+        "hist.svg",
+    ]
+    assert (tmp_path / "hist.png").read_bytes().startswith(b"\x89PNG")
+
+
+@pytest.mark.parametrize("fig_format", ["pdf", "png", "svg"])
+def test_saved_figures_are_reproducible(tmp_path, fig_format):
+    """No creation date in the files, so identical plots give identical files."""
+    contents = []
+    for name in ["first", "second"]:
+        make_kappa_histogram_plot(
+            np.arange(9.0).reshape(3, 3),
+            1.0,
+            fig_path=tmp_path / name,
+            fig_formats=fig_format,
+            verbose=False,
+        )
+        contents.append((tmp_path / f"{name}.{fig_format}").read_bytes())
+    assert contents[0] == contents[1]
