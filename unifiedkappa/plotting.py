@@ -111,9 +111,15 @@ def make_kappa_histogram_plot(
     # x: mode j (columns), y: mode i (rows); empty bins are not drawn
     xpos, ypos = np.meshgrid(np.arange(nbins) * width, np.arange(nbins) * width)
     nonzero = histogram != 0
+    # plot small contributions in units of 10^exponent W/m/K to keep tick labels short
+    exponent = get_z_exponent(histogram)
+    zunit = "W/m/K" if exponent == 0 else rf"$10^{{{exponent}}}$ W/m/K"
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
     ax.view_init(elev=elev, azim=azim)
+    # the saved (tight) bbox always includes the full axes area, so enlarge the 3D box
+    # to fill it instead of leaving empty space above the plot
+    ax.set_box_aspect(None, zoom=1.15)
     if nonzero.any():
         ax.bar3d(
             xpos[nonzero],
@@ -121,7 +127,7 @@ def make_kappa_histogram_plot(
             np.zeros(nonzero.sum()),
             0.9 * width,
             0.9 * width,
-            histogram[nonzero],
+            histogram[nonzero] / 10.0**exponent,
             color=COLORS[part] if color is None else color,
             edgecolor="none",
         )
@@ -129,7 +135,7 @@ def make_kappa_histogram_plot(
     ax.set_ylim(0, nbins * width)
     ax.set_xlabel(r"$\nu_j$ (THz)")
     ax.set_ylabel(r"$\nu_i$ (THz)")
-    ax.set_zlabel(rf"$\kappa_{{{direction}}}$ (W/m/K)")
+    ax.set_zlabel(rf"$\kappa_{{{direction}}}$ ({zunit})", labelpad=8)
 
     for path in get_fig_paths(fig_path, fig_formats):
         _save_figure(fig, path)
@@ -185,6 +191,18 @@ def make_kappa_histogram_plots(
             )
             fig_paths.extend(get_fig_paths(fig_path, fig_formats))
     return fig_paths
+
+
+def get_z_exponent(histogram):
+    """
+    Power of ten to plot a histogram in: the exponent of its largest magnitude if that is
+    below 0.01 W/m/K (so ticks read e.g. 0-5 instead of 0.000-0.005), otherwise 0.
+    """
+    max_value = np.max(np.abs(histogram), initial=0.0)
+    if max_value == 0:
+        return 0
+    exponent = int(np.floor(np.log10(max_value)))
+    return exponent if exponent <= -2 else 0
 
 
 def get_fig_paths(fig_path, fig_formats=None):

@@ -10,6 +10,7 @@ from unifiedkappa.plotting import (
     COLORS,
     get_fig_paths,
     get_histogram_path,
+    get_z_exponent,
     make_kappa_histogram_plot,
     make_kappa_histogram_plots,
     read_kappa_histogram,
@@ -117,6 +118,26 @@ def test_make_kappa_histogram_plot_skips_empty_bins():
         np.zeros((5, 5)), 1.0, fig_path=None, return_fig=True, verbose=False
     )
     assert len(empty.axes[0].collections) == 0
+
+
+@pytest.mark.parametrize(
+    "max_value, expected",
+    [(0.0, 0), (5.0, 0), (0.31, 0), (0.0099, -3), (0.0055, -3), (2.5e-5, -5)],
+)
+def test_get_z_exponent(max_value, expected):
+    histogram = np.zeros((3, 3))
+    histogram[1, 2] = max_value
+    assert get_z_exponent(histogram) == expected
+
+
+def test_small_values_are_scaled():
+    histogram = np.array([[0.0, 0.0055], [0.0055, 0.001]])
+    fig = make_kappa_histogram_plot(
+        histogram, 1.0, fig_path=None, return_fig=True, verbose=False
+    )
+    (ax,) = fig.axes
+    assert ax.get_zlabel() == r"$\kappa_{xx}$ ($10^{-3}$ W/m/K)"
+    assert 5.5 <= ax.get_zlim()[1] < 10
 
 
 def test_make_kappa_histogram_plot_closes_figure(tmp_path):
