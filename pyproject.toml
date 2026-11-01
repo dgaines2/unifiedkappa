@@ -53,3 +53,15 @@ ignore = ["E203", "E231"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["unifiedkappa"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+markers = [
+    "slow: regression tests that run full q-point meshes (deselect with -m 'not slow')",
+]
+
+[tool.coverage.run]
+command_line = "-m pytest"
+source = ["unifiedkappa"]
+omit = ["unifiedkappa/experiments/*"]
