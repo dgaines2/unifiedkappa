@@ -76,8 +76,10 @@ manager = UnifiedkappaManager.from_control(
     "path/to/shengbte_dir", poscar_filename="POSCAR", save_histogram=True
 )
 manager.run_unified_kappa()
-# saves path/to/shengbte_dir/T300K/unifiedkappa-{d,od}_xx.pdf
-make_kappa_histogram_plots("path/to/shengbte_dir/T300K/unifiedkappa")
+# saves path/to/shengbte_dir/T300K/unifiedkappa-{d,od}_xx.{pdf,png}
+make_kappa_histogram_plots(
+    "path/to/shengbte_dir/T300K/unifiedkappa", fig_formats=("pdf", "png")
+)
 ```
 
 See [`examples/`](examples/README.md) for runnable NaCl examples of all of the above.
