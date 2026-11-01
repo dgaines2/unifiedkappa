@@ -3,7 +3,10 @@
 UnifiedkappaManager(save_histogram=True) bins the diagonal ("d") and off-diagonal
 ("od") contributions to kappa by the frequencies (omega_i, omega_j) of the two modes and
 writes one file per part and direction: {filename_prefix}-{part}_{direction}.txt, e.g.
-T300K/unifiedkappa-od_xx.txt. Summing a histogram gives that component of kappa.
+T300K/unifiedkappa-od_xx.txt. Summing a histogram gives that component of kappa
+before symmetrization: the tensors in the .dat files are symmetrized (symprec), the
+histograms are not, so e.g. for a cubic crystal the .dat value of kappa_xx is the mean of
+the xx, yy, and zz histogram sums.
 
 Requires matplotlib (pip install "unifiedkappa[plot]").
 """
@@ -100,21 +103,23 @@ def make_kappa_histogram_plot(
     nbins = histogram.shape[0]
     width = delta_freq / (2 * np.pi)  # rad/ps -> THz
 
-    # x: mode j (columns), y: mode i (rows)
+    # x: mode j (columns), y: mode i (rows); empty bins are not drawn
     xpos, ypos = np.meshgrid(np.arange(nbins) * width, np.arange(nbins) * width)
+    nonzero = histogram != 0
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
     ax.view_init(elev=elev, azim=azim)
-    ax.bar3d(
-        xpos.ravel(),
-        ypos.ravel(),
-        np.zeros(nbins * nbins),
-        0.9 * width,
-        0.9 * width,
-        histogram.ravel(),
-        color=COLORS[part] if color is None else color,
-        edgecolor="none",
-    )
+    if nonzero.any():
+        ax.bar3d(
+            xpos[nonzero],
+            ypos[nonzero],
+            np.zeros(nonzero.sum()),
+            0.9 * width,
+            0.9 * width,
+            histogram[nonzero],
+            color=COLORS[part] if color is None else color,
+            edgecolor="none",
+        )
     ax.set_xlim(0, nbins * width)
     ax.set_ylim(0, nbins * width)
     ax.set_xlabel(r"$\nu_j$ (THz)")

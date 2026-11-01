@@ -101,6 +101,22 @@ def test_make_kappa_histogram_plot(tmp_path):
         np.testing.assert_allclose(rgb / rgb.max(), base / base.max(), atol=1e-6)
 
 
+def test_make_kappa_histogram_plot_skips_empty_bins():
+    histogram = np.zeros((5, 5))
+    histogram[1, 2] = histogram[2, 1] = 0.5
+    fig = make_kappa_histogram_plot(
+        histogram, 1.0, fig_path=None, return_fig=True, verbose=False
+    )
+    (bars,) = fig.axes[0].collections
+    assert len(bars.get_facecolor()) == 2 * 6  # two bars, six faces each
+
+    empty = make_kappa_histogram_plot(
+        np.zeros((5, 5)), 1.0, fig_path=None, return_fig=True, verbose=False
+    )
+    assert len(empty.axes[0].collections) == 0
+    assert empty.axes[0].get_title() == "Off-diagonal: 0.000 W/m/K"
+
+
 def test_make_kappa_histogram_plot_closes_figure(tmp_path):
     result = make_kappa_histogram_plot(
         np.ones((3, 3)), 1.0, fig_path=tmp_path / "hist.pdf", verbose=False
