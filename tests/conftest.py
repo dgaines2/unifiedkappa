@@ -10,6 +10,7 @@ Tests use the data in examples/ (NaCl, 4x4x4 supercell):
 import shutil
 from pathlib import Path
 
+import matplotlib
 import numpy as np
 import phonopy
 import pytest
@@ -19,6 +20,9 @@ from unifiedkappa import ShengBTEAnalyzer
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
 PHONOPY_EXAMPLE_DIR = EXAMPLES_DIR / "phonopy_example"
 SHENGBTE_EXAMPLE_DIR = EXAMPLES_DIR / "shengbte_example"
+
+# non-interactive backend so plotting tests never open windows
+matplotlib.use("Agg")
 
 
 @pytest.fixture(scope="session")

@@ -29,8 +29,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+plot = [
+    "matplotlib",
+]
 dev = [
     "coverage",
+    "matplotlib",
     "pre-commit",
     "pytest",
     "ruff",
