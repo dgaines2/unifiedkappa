@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import phonopy
-from phonopy import Phonopy
 from phonopy.structure.symmetry import Symmetry, _symmetrize_2nd_rank_tensor
 
 from unifiedkappa.full_group_velocity import FullGroupVelocity
@@ -46,9 +45,7 @@ class UnifiedkappaManager:
                 off diagonal components of unifiedkappa
         """
         self.phonon = phonon
-        self.mesh = (
-            np.asarray(mesh, dtype=int) if isinstance(mesh, np.ndarray) else mesh
-        )
+        self.mesh = np.asarray(mesh, dtype=int) if isinstance(mesh, np.ndarray) else mesh
         self.symprec = symprec
         self.shengbte_dir = shengbte_dir
         self.batch_size = batch_size
@@ -84,7 +81,6 @@ class UnifiedkappaManager:
             Gamma (np.array(nqpt, nband]): scattering rate for each phonon mode
         """
         return np.where(freqs > 0, freqs / (2 * np.pi) * tau_factor, 1e10)
-        return Gamma
 
     @staticmethod
     def get_planckian_scattering_rates(freqs, temperature):
@@ -121,9 +117,7 @@ class UnifiedkappaManager:
         beta = hbar / (kB * temperature)
 
         delta_freq = np.max(freqs + 1e-01) / self.n_histogram_bins
-        histogram_kappa_d = np.zeros(
-            (self.n_histogram_bins, self.n_histogram_bins, 3, 3)
-        )
+        histogram_kappa_d = np.zeros((self.n_histogram_bins, self.n_histogram_bins, 3, 3))
         histogram_kappa_od = np.zeros(
             (self.n_histogram_bins, self.n_histogram_bins, 3, 3)
         )
@@ -320,9 +314,7 @@ class UnifiedkappaManager:
                 verbose,
             )
             Gamma = sbte.rates_rta_fbz[f"{temperature}"]
-            filename_prefix = str(
-                self.shengbte_dir / f"T{temperature}K" / "unifiedkappa"
-            )
+            filename_prefix = str(self.shengbte_dir / f"T{temperature}K" / "unifiedkappa")
             kappaD, kappaOD, kappaF = self.calculate_unified_kappa(
                 freqs,
                 Gamma,
@@ -348,8 +340,7 @@ class UnifiedkappaManager:
             kappaF_scalar = np.mean(np.diag(kappaF))
 
             vprint(
-                "Diagonal part of thermal conductivity: "
-                + f"{kappaD_scalar:.3f} W/m/K",
+                "Diagonal part of thermal conductivity: " + f"{kappaD_scalar:.3f} W/m/K",
                 verbose,
             )
             vprint(

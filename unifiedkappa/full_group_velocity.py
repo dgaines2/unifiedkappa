@@ -36,7 +36,9 @@ class FullGroupVelocity:
         if q_length == "auto":
             q_length = 1e-5 if isinstance(self._dynmat, DynamicalMatrixGL) else None
         self._q_length = q_length
-        self._ddm = DerivativeOfDynamicalMatrix(self._dynmat) if q_length is None else None
+        self._ddm = (
+            DerivativeOfDynamicalMatrix(self._dynmat) if q_length is None else None
+        )
 
     def _dynamical_matrix(self, q):
         self._dynmat.run(q)

@@ -3,7 +3,6 @@ from pathlib import Path
 
 import f90nml
 import numpy as np
-import phonopy
 
 """
 author: @dgaines2
@@ -230,7 +229,6 @@ class ShengBTEAnalyzer:
 
         qpoints_full_path = self.workdir / "BTE.qpoints_full"
         qpoints_full_file = np.loadtxt(qpoints_full_path)
-        qi_fbz = qpoints_full_file[:, 0]
         qi_fbz_in_ibz = qpoints_full_file[:, 1]
         qpoints_fbz = qpoints_full_file[:, 2:]
 
@@ -428,7 +426,9 @@ class ShengBTEAnalyzer:
             kappa_rta = self.get_kappa_as_scalar(kappa_rta_tensor)
             if self.kappa_precision is not None:
                 kappa_tensor = np.round(kappa_tensor, decimals=self.kappa_precision)
-                kappa_rta_tensor = np.round(kappa_rta_tensor, decimals=self.kappa_precision)
+                kappa_rta_tensor = np.round(
+                    kappa_rta_tensor, decimals=self.kappa_precision
+                )
             self._kappa[temperature] = kappa
             self._kappa_tensor[temperature] = kappa_tensor
             self._kappa_rta[temperature] = kappa_rta
@@ -454,7 +454,7 @@ class ShengBTEAnalyzer:
         unified_results = defaultdict(dict)
         for temperature_dir in self.temperature_dirs:
             temperature = temperature_dir.name.strip("TK")
-            unified_kappa_path = temperature_dir / f"unifiedkappa.dat"
+            unified_kappa_path = temperature_dir / "unifiedkappa.dat"
             if not unified_kappa_path.exists():
                 continue
             unified_kappa_tensor_file = np.loadtxt(unified_kappa_path)
@@ -593,14 +593,14 @@ if __name__ == "__main__":
     print("Scattering rate analysis")
     for temperature in sbte.temperatures:
         print(f"{temperature}")
-        print(f'{sbte.rates[f"{temperature}"].shape}')
+        print(f"{sbte.rates[f'{temperature}'].shape}")
         print(f'{sbte.rates[f"{temperature}"]=}')
-        print(f'{sbte.rates_fbz[f"{temperature}"].shape}')
+        print(f"{sbte.rates_fbz[f'{temperature}'].shape}")
         print(f'{sbte.rates_fbz[f"{temperature}"]=}')
 
     print("Kappa analysis")
     for temperature in sbte.temperatures:
         print(f"{temperature}")
-        print(f'{sbte.kappa[f"{temperature}"]}')
-        print(f'{sbte.kappa_tensor[f"{temperature}"].shape}')
-        print(f'{sbte.kappa_tensor[f"{temperature}"]}')
+        print(f"{sbte.kappa[f'{temperature}']}")
+        print(f"{sbte.kappa_tensor[f'{temperature}'].shape}")
+        print(f"{sbte.kappa_tensor[f'{temperature}']}")
