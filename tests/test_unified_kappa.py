@@ -96,11 +96,17 @@ def test_save_histogram(nacl_phonon, synthetic_inputs, tmp_path):
     kappaD, kappaOD, _ = manager.calculate_unified_kappa(
         *synthetic_inputs, filename_prefix=str(prefix)
     )
+    freqs = synthetic_inputs[0]
+    delta_freq = np.max(freqs + 0.1) / 10
     for part, kappa in [("d", kappaD), ("od", kappaOD)]:
         for i, direction in enumerate(["xx", "yy", "zz"]):
-            hist = np.loadtxt(f"{prefix}-{part}_{direction}.txt")
+            path = f"{prefix}-{part}_{direction}.txt"
+            hist = np.loadtxt(path)
             assert hist.shape == (10, 10)
             assert hist.sum() == pytest.approx(kappa[i, i], rel=1e-8)
+            with open(path) as fr:
+                header = fr.readline()
+            assert header == f"# delta_freq = {delta_freq:.10g} rad/ps\n"
 
 
 def test_run_unified_kappa_requires_shengbte_dir(manager):

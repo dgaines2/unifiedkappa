@@ -175,14 +175,19 @@ class UnifiedkappaManager:
         if self.save_histogram:
             if filename_prefix is None:
                 filename_prefix = f"unifiedkappa-{int(temperature)}"
+            # row i, column j: modes with frequencies in bins i and j, where bin n
+            # spans [n * delta_freq, (n + 1) * delta_freq)
+            header = f"delta_freq = {delta_freq:.10g} rad/ps"
             for direction, index in zip(["xx", "yy", "zz"], [0, 1, 2]):
                 np.savetxt(
                     f"{filename_prefix}-d_{direction}.txt",
                     histogram_kappa_d[:, :, index, index],
+                    header=header,
                 )
                 np.savetxt(
                     f"{filename_prefix}-od_{direction}.txt",
                     histogram_kappa_od[:, :, index, index],
+                    header=header,
                 )
 
         diag_mask = np.eye(nband, dtype=bool)
