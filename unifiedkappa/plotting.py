@@ -85,7 +85,7 @@ def make_kappa_histogram_plot(
         histogram (np.array[nbins, nbins]): contributions in W/m/K
             (see read_kappa_histogram)
         delta_freq (float): bin width in rad/ps
-        part (str): "d" or "od", used for the title and default color
+        part (str): "d" or "od", used for the default color
         direction (str): "xx", "yy", or "zz", used for the axis label
         fig_path (str | Path | None): path to save the figure. If None, don't save.
         fig_formats (str | iterable[str] | None): if given, save one file per format
@@ -130,7 +130,6 @@ def make_kappa_histogram_plot(
     ax.set_xlabel(r"$\nu_j$ (THz)")
     ax.set_ylabel(r"$\nu_i$ (THz)")
     ax.set_zlabel(rf"$\kappa_{{{direction}}}$ (W/m/K)")
-    ax.set_title(f"{PARTS[part]}: {histogram.sum():.3f} W/m/K")
 
     for path in get_fig_paths(fig_path, fig_formats):
         _save_figure(fig, path)

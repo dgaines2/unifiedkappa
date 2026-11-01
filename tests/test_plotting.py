@@ -96,7 +96,7 @@ def test_make_kappa_histogram_plot(tmp_path):
     assert ax.get_zlim()[1] >= histogram.max()
     assert "THz" in ax.get_xlabel() and "THz" in ax.get_ylabel()
     assert ax.get_zlabel() == r"$\kappa_{yy}$ (W/m/K)"
-    assert ax.get_title() == "Diagonal: 120.000 W/m/K"
+    assert ax.get_title() == ""
     (bars,) = ax.collections
     # bar3d shades each face by scaling the base color
     for face in bars.get_facecolor():
@@ -117,7 +117,6 @@ def test_make_kappa_histogram_plot_skips_empty_bins():
         np.zeros((5, 5)), 1.0, fig_path=None, return_fig=True, verbose=False
     )
     assert len(empty.axes[0].collections) == 0
-    assert empty.axes[0].get_title() == "Off-diagonal: 0.000 W/m/K"
 
 
 def test_make_kappa_histogram_plot_closes_figure(tmp_path):
