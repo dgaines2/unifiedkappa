@@ -7,25 +7,14 @@ import phonopy
 from phonopy import Phonopy
 from phonopy.structure.symmetry import Symmetry, _symmetrize_2nd_rank_tensor
 
+from full_group_velocity import FullGroupVelocity
 from shengbte_analysis import ShengBTEAnalyzer
 
 """
 author: @yixia
 author: @dgaines2
 A python class to compute kL_min
-
-The calculation of kL_min relies on modified versions of:
-    - api_phonopy.py -> from phonopy import Phonopy
-    - mesh.py -> from phonopy.phonon.mesh import Mesh
-    - group_velocity.py -> from phonopy.phonon.group_velocity import GroupVelocity
-for Phonopy version 2.17.1
 """
-
-
-class LibraryModificationRequired(Exception):
-    """Raised when the required library modifications have not been made."""
-
-    pass
 
 
 class UnifiedkappaManager:
@@ -67,27 +56,21 @@ class UnifiedkappaManager:
         self.save_histogram = save_histogram
 
     def get_mesh_dict(self):
-        try:
-            self.phonon.run_mesh(
-                self.mesh,
-                with_eigenvectors=False,
-                is_gamma_center=True,
-                with_full_group_velocities=True,
-                is_time_reversal=False,
-                is_mesh_symmetry=False,
-            )
-        except TypeError as e:
-            if "full_group_velocities" in str(e):
-                raise LibraryModificationRequired(
-                    "Phonopy must be modified to calculate off-diagonal group "
-                    "velocities. Be sure to make modifications to Phonopy 2.17.1. "
-                    "See more details in the README here: "
-                    "https://github.com/yimavxia/Minikappa/tree/main/scripts"
-                ) from e
-            else:
-                raise
-        mesh_dict = self.phonon.get_mesh_dict()
-        return mesh_dict
+        self.phonon.run_mesh(
+            self.mesh,
+            with_eigenvectors=False,
+            is_gamma_center=True,
+            is_time_reversal=False,
+            is_mesh_symmetry=False,
+        )
+        mesh = self.phonon.mesh
+        _, group_velocities_full = FullGroupVelocity(self.phonon).run(mesh.qpoints)
+        return {
+            "qpoints": mesh.qpoints,
+            "weights": mesh.weights,
+            "frequencies": mesh.frequencies,
+            "group_velocities_full": group_velocities_full,
+        }
 
     @staticmethod
     def get_maximum_scattering_rates(freqs, tau_factor):
