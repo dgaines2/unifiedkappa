@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backend_bases import FigureCanvasBase
 from matplotlib.colors import LightSource, LinearSegmentedColormap, PowerNorm
+from matplotlib.ticker import MaxNLocator
 from matplotlib.transforms import Bbox
 from scipy.ndimage import zoom as upsample_array
 
@@ -346,6 +347,23 @@ def get_z_exponent(histogram):
     return exponent if exponent <= -2 else 0
 
 
+def get_tick_locator(vmin, vmax, target=5, steps=(1, 2, 2.5, 5, 10)):
+    """
+    Tick locator giving about target ticks between vmin and vmax, on round numbers
+    (steps of 1, 2, 2.5, or 5 x 10^n). Tries several maximum numbers of intervals and
+    keeps the one whose tick count is closest to target, preferring fewer ticks on ties.
+    """
+    best = None
+    for nbins in range(2, 2 * target + 1):
+        locator = MaxNLocator(nbins=nbins, steps=list(steps))
+        ticks = locator.tick_values(vmin, vmax)
+        count = np.count_nonzero((ticks >= vmin - 1e-12) & (ticks <= vmax + 1e-12))
+        score = (abs(count - target), count)
+        if best is None or score < best[0]:
+            best = (score, locator)
+    return best[1]
+
+
 def get_fig_paths(fig_path, fig_formats=None):
     """
     Paths a figure is saved to.
@@ -437,6 +455,12 @@ def _set_3d_labels(ax, direction, zunit, xy_tick_pad, z_tick_pad, xy_labelpad, z
     3D tick labels are centered on their anchor, so wide labels (e.g. "0.05") need a
     larger pad than single digits.
     """
+    for axis, limits in [
+        (ax.xaxis, ax.get_xlim()),
+        (ax.yaxis, ax.get_ylim()),
+        (ax.zaxis, ax.get_zlim()),
+    ]:
+        axis.set_major_locator(get_tick_locator(*limits))
     ax.tick_params(axis="x", which="major", pad=xy_tick_pad)
     ax.tick_params(axis="y", which="major", pad=xy_tick_pad)
     ax.tick_params(axis="z", which="major", pad=z_tick_pad)

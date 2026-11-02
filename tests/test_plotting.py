@@ -10,6 +10,7 @@ from unifiedkappa.plotting import (
     COLORS,
     get_fig_paths,
     get_histogram_path,
+    get_tick_locator,
     get_z_exponent,
     make_kappa_histogram_plot,
     make_kappa_histogram_plots,
@@ -347,3 +348,38 @@ def test_surface_figure_is_cropped_to_content(tmp_path):
     height, width = ink.shape
     assert rows[0] / height < 0.06 and 1 - (rows[-1] + 1) / height < 0.06
     assert cols[0] / width < 0.06 and 1 - (cols[-1] + 1) / width < 0.06
+
+
+@pytest.mark.parametrize("plot", ["bar", "surface"])
+@pytest.mark.parametrize("scale", [1e-3, 0.3, 7.0])
+def test_about_five_ticks_per_axis(plot, scale):
+    """4-6 ticks per axis, on round numbers."""
+    histogram = _bump(20) * scale / 1e-3
+    make = make_kappa_surface_plot if plot == "surface" else make_kappa_histogram_plot
+    fig = make(histogram, 2 * np.pi * 0.4, fig_path=None, return_fig=True, verbose=False)
+    ax = fig.axes[0]
+    for axis, (lo, hi) in [
+        (ax.xaxis, ax.get_xlim()),
+        (ax.yaxis, ax.get_ylim()),
+        (ax.zaxis, ax.get_zlim()),
+    ]:
+        ticks = [t for t in axis.get_majorticklocs() if lo - 1e-9 <= t <= hi + 1e-9]
+        assert 4 <= len(ticks) <= 6, (ticks, lo, hi)
+        step = ticks[1] - ticks[0]
+        mantissa = step / 10 ** np.floor(np.log10(step))
+        assert any(np.isclose(mantissa, m) for m in (1, 2, 2.5, 5)), step
+
+
+@pytest.mark.parametrize(
+    "vmin, vmax, expected",
+    [
+        (0, 7.63, [0, 2, 4, 6]),  # frequency axes of the examples (THz)
+        (0, 5.75, [0, 1, 2, 3, 4, 5]),  # unified kappa off-diagonal (1e-3 W/m/K)
+        (0, 3.2, [0, 1, 2, 3]),  # minikappa off-diagonal (1e-3 W/m/K)
+        (-0.006, 0.306, [0, 0.1, 0.2, 0.3]),  # diagonal bars (W/m/K), with margins
+    ],
+)
+def test_get_tick_locator(vmin, vmax, expected):
+    ticks = get_tick_locator(vmin, vmax).tick_values(vmin, vmax)
+    ticks = ticks[(ticks >= vmin - 1e-12) & (ticks <= vmax + 1e-12)]
+    np.testing.assert_allclose(ticks, expected, atol=1e-12)
