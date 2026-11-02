@@ -1,3 +1,6 @@
+# Copyright (c) Yi Xia and Dale Gaines II
+# Distributed under the terms of the BSD 3-Clause License
+
 """Off-diagonal (full) phonon group velocities.
 
     v_ij(q) = factor^2 <e_i| dD/dq |e_j> / (f_i + f_j),   f_i, f_j > cutoff

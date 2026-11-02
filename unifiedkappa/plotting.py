@@ -1,3 +1,6 @@
+# Copyright (c) Yi Xia and Dale Gaines II
+# Distributed under the terms of the BSD 3-Clause License
+
 """Plots of frequency-resolved thermal conductivity.
 
 UnifiedkappaManager(save_histogram=True) bins the diagonal ("d") and off-diagonal

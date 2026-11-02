@@ -1,12 +1,13 @@
+# Copyright (c) Yi Xia and Dale Gaines II
+# Distributed under the terms of the BSD 3-Clause License
+
+"""Reading ShengBTE/FourPhonon inputs and outputs."""
+
 from collections import defaultdict
 from pathlib import Path
 
 import f90nml
 import numpy as np
-
-"""
-author: @dgaines2
-"""
 
 
 class ShengBTEAnalyzer:

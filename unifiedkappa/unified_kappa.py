@@ -1,3 +1,11 @@
+# Copyright (c) Yi Xia and Dale Gaines II
+# Distributed under the terms of the BSD 3-Clause License
+
+"""Diagonal and off-diagonal lattice thermal conductivity: unified kappa from
+ShengBTE/FourPhonon scattering rates, and minimum kappa (minikappa) from maximum
+scattering rates.
+"""
+
 import itertools
 from functools import partial
 from pathlib import Path
@@ -8,12 +16,6 @@ from phonopy.structure.symmetry import Symmetry, _symmetrize_2nd_rank_tensor
 
 from unifiedkappa.full_group_velocity import FullGroupVelocity
 from unifiedkappa.shengbte_analysis import ShengBTEAnalyzer
-
-"""
-author: @yixia
-author: @dgaines2
-A python class to compute kL_min
-"""
 
 
 class UnifiedkappaManager:
