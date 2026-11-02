@@ -1,4 +1,9 @@
-# Unifiedkappa
+# unifiedkappa
+[![Tests](https://github.com/dgaines2/unifiedkappa/actions/workflows/tests.yml/badge.svg)](https://github.com/dgaines2/unifiedkappa/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/github/dgaines2/unifiedkappa/graph/badge.svg)](https://codecov.io/github/dgaines2/unifiedkappa)
+[![PyPI Version](https://img.shields.io/pypi/v/unifiedkappa)](https://pypi.org/project/unifiedkappa)
+[![Requires Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org/downloads)
+
 Computes lattice thermal conductivity, including both the diagonal (particle-like,
 Peierls) and off-diagonal (wave-like, coherence) contributions, with a unified
 treatment of phonon transport. It supports two kinds of calculation:
@@ -21,8 +26,13 @@ Off-diagonal group velocity tensors, with degeneracy properly treated, are compu
 
 ## Installation
 ```bash
-git clone git@github.com:dgaines2/Unifiedkappa.git
-cd Unifiedkappa
+pip install unifiedkappa    # once released on PyPI
+```
+
+From source:
+```bash
+git clone git@github.com:dgaines2/unifiedkappa.git
+cd unifiedkappa
 pip install -e .            # or: uv pip install -e .
 ```
 

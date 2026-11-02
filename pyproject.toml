@@ -42,7 +42,7 @@ dev = [
 ]
 
 [project.urls]
-repository = "https://github.com/dgaines2/Unifiedkappa"
+repository = "https://github.com/dgaines2/unifiedkappa"
 
 [tool.ruff]
 target-version = "py311"

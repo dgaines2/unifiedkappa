@@ -10,7 +10,7 @@ on:
 jobs:
   lint:
     # prevent this action from running on forks
-    if: github.repository == 'dgaines2/Unifiedkappa'
+    if: github.repository == 'dgaines2/unifiedkappa'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
 
   test:
     # prevent this action from running on forks
-    if: github.repository == 'dgaines2/Unifiedkappa'
+    if: github.repository == 'dgaines2/unifiedkappa'
     runs-on: ubuntu-latest
     strategy:
       # report results for every version instead of cancelling on first failure
@@ -45,3 +45,10 @@ jobs:
         run: |
           uv run coverage run
           uv run coverage report -m
+          uv run coverage xml
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
