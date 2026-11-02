@@ -23,9 +23,10 @@ maintainers = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
 keywords = ["phonons", "thermal conductivity", "wigner transport", "phonopy", "shengbte"]
 requires-python = ">=3.11"
 dependencies = [
-    "numpy>=1.22",
-    "phonopy>=4.8,<5",
-    "f90nml",
+    # floors are tested in CI (tests.yml: test-floor)
+    "numpy>=1.23.2",  # first release with Python 3.11 wheels
+    "phonopy>=4.7",   # 4.0-4.4 pull in an incompatible phonors
+    "f90nml>=0.23",   # Namelist.todict()
 ]
 
 [project.optional-dependencies]
