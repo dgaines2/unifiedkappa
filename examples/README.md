@@ -29,9 +29,14 @@ Harmonic inputs only (`POSCAR-prim`, `FORCE_CONSTANTS`). `run.py` uses
 
 ## `plotting/`
 `plot.py` reads the xx histograms written by `shengbte_example/run.py` (no recalculation)
-and saves 3D bar plots of the diagonal and off-diagonal contributions to kappa_xx over the
+and saves 3D plots of the diagonal and off-diagonal contributions to kappa_xx over the
 frequencies of the two modes, as PDF and PNG (300 dpi), using `unifiedkappa.plotting`.
-For example, the off-diagonal (coherence) part of the unified kappa at 300 K:
+The off-diagonal part is drawn as a smooth surface colored by height
+(`make_kappa_surface_plot`), in the style of
+[Xia *et al.*, Phys. Rev. X **10**, 041029 (2020), Fig. 6(d,e)](https://doi.org/10.1103/PhysRevX.10.041029);
+the diagonal part, which lies only on the nu_i = nu_j bins, is drawn as bars
+(`make_kappa_histogram_plot`). For example, the off-diagonal (coherence) part of the
+unified kappa at 300 K:
 
 <p align="center">
   <img src="plotting/unifiedkappa-300K-od_xx.png" alt="Off-diagonal contribution to kappa_xx of NaCl at 300 K, binned by the frequencies of the two modes" width="500">
@@ -44,7 +49,9 @@ For example, the off-diagonal (coherence) part of the unified kappa at 300 K:
 
 The diagonal part lies on the nu_i = nu_j line. The off-diagonal part spreads to pairs of
 modes with different frequencies, with a Lorentzian weight that falls off once their
-frequency difference exceeds their combined linewidth. The figures are saved without a
+frequency difference exceeds their combined linewidth; it is broader for minikappa, whose
+linewidths are larger. The surface is interpolated (cubic, 8x) from the bin centers, and
+regions below 0.2% of the maximum are left empty. The figures are saved without a
 creation date, so rerunning `plot.py` leaves them unchanged unless the plots change. The
 histograms are not symmetrized, unlike the tensors in the `.dat` files, so for cubic NaCl
 the `.dat` kappa_xx is the mean of the xx, yy, and zz histogram sums.

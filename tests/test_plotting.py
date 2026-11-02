@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from matplotlib.colors import to_rgba
 
-from unifiedkappa import UnifiedkappaManager
+from unifiedkappa import UnifiedkappaManager, plotting
 from unifiedkappa.plotting import (
     COLORS,
     get_fig_paths,
@@ -13,6 +13,7 @@ from unifiedkappa.plotting import (
     get_z_exponent,
     make_kappa_histogram_plot,
     make_kappa_histogram_plots,
+    make_kappa_surface_plot,
     read_kappa_histogram,
 )
 
@@ -231,3 +232,118 @@ def test_saved_figures_are_reproducible(tmp_path, fig_format):
         )
         contents.append((tmp_path / f"{name}.{fig_format}").read_bytes())
     assert contents[0] == contents[1]
+
+
+def _bump(nbins=10, zero_corner=True):
+    """Smooth positive bump, zero in one corner so that masking has something to do."""
+    x = np.arange(nbins)
+    histogram = 1e-3 * np.exp(-((x[:, None] - 5) ** 2 + (x[None, :] - 5) ** 2) / 4)
+    if zero_corner:
+        histogram[:3, :3] = 0
+    return histogram
+
+
+def test_make_kappa_surface_plot(tmp_path):
+    histogram = _bump()
+    delta_freq = 2 * np.pi * 0.5  # 0.5 THz bins
+    fig = make_kappa_surface_plot(
+        histogram,
+        delta_freq,
+        direction="zz",
+        fig_path=tmp_path / "surface",
+        fig_formats=("pdf", "png"),
+        return_fig=True,
+        verbose=False,
+    )
+    assert (tmp_path / "surface.pdf").stat().st_size > 0
+    assert (tmp_path / "surface.png").stat().st_size > 0
+    (ax,) = fig.axes
+    assert ax.name == "3d"
+    np.testing.assert_allclose(ax.get_xlim(), [0, 5.0])
+    np.testing.assert_allclose(ax.get_ylim(), [0, 5.0])
+    assert ax.get_zlabel() == r"$\kappa_{zz}$ ($10^{-3}$ W/m/K)"
+    assert ax.get_zlim()[1] == pytest.approx(1.05 * 1.0, rel=0.05)
+    (surface,) = ax.collections
+    assert surface.get_rasterized()
+    # dashed box: 4 top edges + 3 vertical edges (the one nearest the viewer is skipped)
+    lines = ax.get_lines()
+    assert len(lines) == 7
+    assert all(line.get_linestyle() == "--" for line in lines)
+
+
+def test_make_kappa_surface_plot_masks_small_values():
+    nbins = 10
+    full = make_kappa_surface_plot(
+        _bump(nbins, zero_corner=False),
+        1.0,
+        upsample=1,
+        min_fraction=0,
+        fig_path=None,
+        return_fig=True,
+        verbose=False,
+    )
+    masked = make_kappa_surface_plot(
+        _bump(nbins), 1.0, upsample=1, fig_path=None, return_fig=True, verbose=False
+    )
+    full.canvas.draw()  # 3D collections project their faces when drawn
+    masked.canvas.draw()
+    n_full = len(full.axes[0].collections[0].get_paths())
+    n_masked = len(masked.axes[0].collections[0].get_paths())
+    assert n_full == (nbins - 1) ** 2
+    assert 0 < n_masked < n_full
+
+
+def test_make_kappa_surface_plot_empty_histogram():
+    fig = make_kappa_surface_plot(
+        np.zeros((5, 5)), 1.0, fig_path=None, return_fig=True, verbose=False
+    )
+    assert len(fig.axes[0].collections) == 0
+
+
+@pytest.mark.parametrize("fig_format", ["pdf", "png"])
+def test_surface_figures_are_reproducible(tmp_path, fig_format):
+    contents = []
+    for name in ["first", "second"]:
+        make_kappa_surface_plot(
+            _bump(), 1.0, fig_path=tmp_path / name, fig_formats=fig_format, verbose=False
+        )
+        contents.append((tmp_path / f"{name}.{fig_format}").read_bytes())
+    assert contents[0] == contents[1]
+
+
+@pytest.mark.parametrize(
+    "style, expected",
+    [("surface", {"d": "bar", "od": "surface"}), ("bar", {"d": "bar", "od": "bar"})],
+)
+def test_make_kappa_histogram_plots_style(histogram_files, monkeypatch, style, expected):
+    """The diagonal part always uses bars; style only changes the off-diagonal part."""
+    calls = {}
+
+    def record(kind):
+        def plot(histogram, delta_freq, part="od", **kwargs):
+            calls[kwargs["fig_path"].name.rsplit("-", 1)[1].split("_")[0]] = kind
+
+        return plot
+
+    monkeypatch.setattr(plotting, "make_kappa_histogram_plot", record("bar"))
+    monkeypatch.setattr(plotting, "make_kappa_surface_plot", record("surface"))
+    prefix, _, _ = histogram_files
+    make_kappa_histogram_plots(prefix, style=style, verbose=False)
+    assert calls == expected
+
+
+def test_make_kappa_histogram_plots_invalid_style(histogram_files):
+    prefix, _, _ = histogram_files
+    with pytest.raises(ValueError, match="style"):
+        make_kappa_histogram_plots(prefix, style="contour", verbose=False)
+
+
+def test_surface_figure_is_cropped_to_content(tmp_path):
+    """The saved figure has no large blank margins (the axes area around the 3D box)."""
+    make_kappa_surface_plot(_bump(20), 1.0, fig_path=tmp_path / "s.png", verbose=False)
+    ink = (plt.imread(tmp_path / "s.png")[..., :3] < 0.97).any(axis=2)
+    rows = np.where(ink.any(axis=1))[0]
+    cols = np.where(ink.any(axis=0))[0]
+    height, width = ink.shape
+    assert rows[0] / height < 0.06 and 1 - (rows[-1] + 1) / height < 0.06
+    assert cols[0] / width < 0.06 and 1 - (cols[-1] + 1) / width < 0.06
