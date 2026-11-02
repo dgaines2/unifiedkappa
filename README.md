@@ -25,8 +25,10 @@ Off-diagonal group velocity tensors, with degeneracy properly treated, are compu
 `unifiedkappa/full_group_velocity.py`.
 
 ## Installation
+From [PyPI](https://pypi.org/project/unifiedkappa):
 ```bash
-pip install unifiedkappa    # once released on PyPI
+pip install unifiedkappa
+pip install "unifiedkappa[plot]"   # with the optional plotting dependencies (matplotlib, scipy)
 ```
 
 From source:
@@ -34,11 +36,7 @@ From source:
 git clone git@github.com:dgaines2/unifiedkappa.git
 cd unifiedkappa
 pip install -e .            # or: uv pip install -e .
-```
-
-For plotting, install the optional matplotlib dependency:
-```bash
-pip install -e ".[plot]"
+pip install -e ".[plot]"    # with plotting
 ```
 
 For development (pytest, ruff, pre-commit, coverage, matplotlib):
