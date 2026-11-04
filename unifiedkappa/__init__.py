@@ -12,13 +12,22 @@ __version__ = "0.1.1"
 __author__ = "Yi Xia and Dale Gaines II"
 
 from unifiedkappa.full_group_velocity import FullGroupVelocity
-from unifiedkappa.shengbte_analysis import ShengBTEAnalyzer, unwrap_qpoints
+from unifiedkappa.shengbte_analysis import (
+    ShengBTEAnalyzer,
+    ShengBTEOverflowError,
+    load_bte,
+    unwrap_qpoints,
+    wrap_qpoints,
+)
 from unifiedkappa.unified_kappa import UnifiedkappaManager, read_minikappa_file
 
 __all__ = [
     "FullGroupVelocity",
     "ShengBTEAnalyzer",
+    "ShengBTEOverflowError",
     "UnifiedkappaManager",
+    "load_bte",
     "read_minikappa_file",
     "unwrap_qpoints",
+    "wrap_qpoints",
 ]

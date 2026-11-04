@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from unifiedkappa import ShengBTEAnalyzer, unwrap_qpoints
+from unifiedkappa import ShengBTEAnalyzer, unwrap_qpoints, wrap_qpoints
 
 
 def test_control(sbte):
@@ -89,3 +89,58 @@ def test_unwrap_qpoints():
     qpoints = np.array([[0.0, -0.25, 0.5], [-0.04, 0.12, -0.48]])
     expected = np.array([[0.0, 0.75, 0.5], [0.96, 0.12, 0.52]])
     np.testing.assert_allclose(unwrap_qpoints(qpoints), expected)
+
+
+def test_wrap_qpoints():
+    qpoints = np.array([[0.0, 0.25, 0.5], [0.75, 0.8, 0.0]])
+    expected = np.array([[0.0, 0.25, 0.5], [-0.25, -0.2, 0.0]])
+    np.testing.assert_allclose(wrap_qpoints(qpoints), expected)
+
+
+def test_wrap_unwrap_roundtrip():
+    # avoid +-0.5: both signs are equivalent, so the roundtrip is ambiguous
+    original = np.array([[0.0, 0.25, -0.25], [-0.4, 0.1, -0.3]])
+    np.testing.assert_allclose(
+        wrap_qpoints(unwrap_qpoints(original)), original, atol=1e-10
+    )
+
+
+def test_kappa_as_scalar(sbte):
+    diag = np.array([10.0, 0, 0, 0, 20.0, 0, 0, 0, 30.0])
+    assert sbte.get_kappa_as_scalar(diag) == pytest.approx(20.0)
+    assert sbte.get_kappa_as_scalar(diag.reshape(3, 3)) == pytest.approx(20.0)
+
+
+def test_kappa_as_scalar_rounded(sbte):
+    # mean of the diagonal is 1/3; rounded to kappa_precision (5) decimals
+    tensor = np.diag([1.0, 0.0, 0.0])
+    assert sbte.kappa_precision == 5
+    assert sbte.get_kappa_as_scalar(tensor) == 0.33333
+
+
+def test_all_kappa_rounded(shengbte_example_dir):
+    """Every kappa tensor and scalar is rounded to kappa_precision."""
+    sbte = ShengBTEAnalyzer(shengbte_example_dir, kappa_precision=2)
+    quantities = {
+        name: getattr(sbte, name)
+        for name in [
+            "kappa",
+            "kappa_tensor",
+            "kappa_rta",
+            "kappa_rta_tensor",
+            "unified_kappa",
+            "unified_kappa_tensor",
+            "unified_kappa_D",
+            "unified_kappa_D_tensor",
+            "unified_kappa_OD",
+            "unified_kappa_OD_tensor",
+        ]
+    }
+    for name in ["ckappa_vs_omega", "ckappa_vs_mfp"]:
+        quantities[name] = {t: d["ckappa"] for t, d in getattr(sbte, name).items()}
+    for name in ["ckappa_tensor_vs_omega", "ckappa_tensor_vs_mfp"]:
+        quantities[name] = {t: d["ckappa"] for t, d in getattr(sbte, name).items()}
+    for name, by_temperature in quantities.items():
+        assert by_temperature, name
+        for value in by_temperature.values():
+            np.testing.assert_array_equal(value, np.round(value, 2), err_msg=name)
