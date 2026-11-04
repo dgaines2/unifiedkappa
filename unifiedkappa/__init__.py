@@ -8,7 +8,7 @@ conductivity from the Wigner transport equation, using phonopy and ShengBTE/Four
 """
 
 __package__ = "unifiedkappa"
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Yi Xia and Dale Gaines II"
 
 from unifiedkappa.full_group_velocity import FullGroupVelocity
