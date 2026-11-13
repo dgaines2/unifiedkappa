@@ -24,8 +24,12 @@ def degenerate_sets(freqs, cutoff=DEFAULT_CUTOFF):
     For ascending freqs these are the sets of phonopy's degenerate_sets (bands
     within cutoff of a member of the set), which is O(nband^2) in Python: a
     set is a run of bands whose consecutive differences are below cutoff.
+    Neither version is correct for other orders, so those raise ValueError.
     """
-    breaks = np.flatnonzero(np.diff(freqs) >= cutoff) + 1
+    gaps = np.diff(freqs)
+    if np.any(gaps < 0):
+        raise ValueError("freqs must be in ascending order, as eigh returns them")
+    breaks = np.flatnonzero(gaps >= cutoff) + 1
     return np.split(np.arange(len(freqs)), breaks)
 
 

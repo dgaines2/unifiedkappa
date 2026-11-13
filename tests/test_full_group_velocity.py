@@ -78,3 +78,13 @@ def test_degenerate_sets_match_phonopy():
         freqs = np.cumsum(steps) - rng.uniform(0, 1)
         expected = phonopy_degenerate_sets(freqs)
         assert [list(s) for s in degenerate_sets(freqs)] == expected
+
+
+@pytest.mark.parametrize(
+    "freqs", [[1.0, 1.00015, 1.00008], [1.0, 2.0, 1.00005], [2.0, 1.0]]
+)
+def test_degenerate_sets_requires_ascending(freqs):
+    from unifiedkappa.full_group_velocity import degenerate_sets
+
+    with pytest.raises(ValueError, match="ascending"):
+        degenerate_sets(np.array(freqs))
