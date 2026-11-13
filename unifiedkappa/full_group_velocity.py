@@ -12,10 +12,21 @@ direction is diagonal in each.
 import numpy as np
 from phonopy.harmonic.derivative_dynmat import DerivativeOfDynamicalMatrix
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrixGL
-from phonopy.phonon.degeneracy import degenerate_sets
+from phonopy.phonon.degeneracy import DEFAULT_CUTOFF
 
 _DIRECTIONS = np.array([[1, 2, 3], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype="double")
 _DIRECTIONS[0] /= np.linalg.norm(_DIRECTIONS[0])
+
+
+def degenerate_sets(freqs, cutoff=DEFAULT_CUTOFF):
+    """Indices of degenerate bands, grouped; freqs must be in ascending order.
+
+    For ascending freqs these are the sets of phonopy's degenerate_sets (bands
+    within cutoff of a member of the set), which is O(nband^2) in Python: a
+    set is a run of bands whose consecutive differences are below cutoff.
+    """
+    breaks = np.flatnonzero(np.diff(freqs) >= cutoff) + 1
+    return np.split(np.arange(len(freqs)), breaks)
 
 
 class FullGroupVelocity:

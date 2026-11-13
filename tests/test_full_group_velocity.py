@@ -61,3 +61,20 @@ def test_cutoff_frequency_zeros_acoustic_modes(nacl_phonon):
     assert acoustic.sum() == 3
     assert np.all(v_full[acoustic] == 0)
     assert np.all(v_full[:, acoustic] == 0)
+
+
+def test_degenerate_sets_match_phonopy():
+    """Same sets as phonopy's degenerate_sets for ascending frequencies."""
+    from phonopy.phonon.degeneracy import degenerate_sets as phonopy_degenerate_sets
+
+    from unifiedkappa.full_group_velocity import degenerate_sets
+
+    rng = np.random.default_rng(0)
+    for _ in range(200):
+        # clusters of near-equal values, gaps straddling the 1e-4 cutoff, chains
+        steps = rng.choice(
+            [0.0, 3e-5, 9.9e-5, 1e-4, 1.01e-4, 0.5], size=rng.integers(1, 40)
+        )
+        freqs = np.cumsum(steps) - rng.uniform(0, 1)
+        expected = phonopy_degenerate_sets(freqs)
+        assert [list(s) for s in degenerate_sets(freqs)] == expected
