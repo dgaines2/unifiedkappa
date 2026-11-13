@@ -164,6 +164,8 @@ class UnifiedkappaManager:
             kappaband += np.einsum("bij, bijkp -> ijkp", prefactor, tmpv)
 
             # Gather scattering contributions for histogram
+            if not self.save_histogram:
+                continue
             for b in range(omega1.shape[0]):
                 for i, j in itertools.product(range(nband), range(nband)):
                     k_contrib = tmpv[b, i, j] * prefactor[b, i, j]  # -> (3,3)

@@ -109,6 +109,22 @@ def test_save_histogram(nacl_phonon, synthetic_inputs, tmp_path):
             assert header == f"# delta_freq = {delta_freq:.10g} rad/ps\n"
 
 
+def test_no_histogram_by_default(nacl_phonon, synthetic_inputs, tmp_path):
+    """save_histogram=False skips the histogram but gives the same kappa."""
+    prefix = tmp_path / "hist"
+    kappas = {}
+    for save in (True, False):
+        manager = UnifiedkappaManager(
+            nacl_phonon, symprec=None, save_histogram=save, batch_size=7
+        )
+        kappas[save] = manager.calculate_unified_kappa(
+            *synthetic_inputs, filename_prefix=str(prefix) + str(save)
+        )
+    for a, b in zip(kappas[True], kappas[False]):
+        np.testing.assert_array_equal(a, b)
+    assert not list(tmp_path.glob("histFalse*"))
+
+
 def test_run_unified_kappa_requires_shengbte_dir(manager):
     with pytest.raises(RuntimeError, match="shengbte_dir"):
         manager.run_unified_kappa(verbose=False)
